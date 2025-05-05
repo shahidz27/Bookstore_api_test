@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
 
@@ -22,8 +21,11 @@ pipeline {
         stage('Test') {
             steps {
                 bat '''
-                  set PYTHONPATH=%CD%
-                  jenkins_venv\\Scripts\\pytest --junitxml=test-results.xml ./test
+                    set PYTHONPATH=%CD%
+                    start /B jenkins_venv\\Scripts\\python run.py
+                    timeout /T 5
+                    jenkins_venv\\Scripts\\pytest --junitxml=test-results.xml ./test
+                    taskkill /F /IM python.exe >nul 2>&1
                 '''
             }
         }
