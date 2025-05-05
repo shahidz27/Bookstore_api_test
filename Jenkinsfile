@@ -12,7 +12,7 @@ pipeline {
             steps {
                 bat '''
                     python -m venv jenkins_venv || echo "Virtualenv already exists"
-                    call 'call jenkins_venv\\Scripts\\activate && python run.py'
+                    call jenkins_venv\\Scripts\\activate
                     python -m pip install --upgrade pip
                     pip install -r requirements.txt --force-reinstall || exit 1
                     python run.py
