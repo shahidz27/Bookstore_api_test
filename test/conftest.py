@@ -48,7 +48,7 @@ def book_data(request):
 
 @pytest.fixture
 def create_book(client, book_data):
-    """Create a book using parameterized data."""
+    #Create a book using parameterized data
     response = client.post("/books", json=book_data)
     assert response.status_code == 201
     return response.get_json(), book_data
