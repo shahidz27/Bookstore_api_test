@@ -1,11 +1,9 @@
 pipeline {
     agent any
 
-    // Automatic triggers (choose one)
     triggers {
-        githubPush()  // Requires GitHub webhook setup
-        // OR poll SCM periodically
-        // pollSCM('H/5 * * * *')  // Every 5 minutes
+        githubPush()
+        // pollSCM('H/5 * * * *')  // Uncomment if you want periodic polling
     }
 
     stages {
@@ -13,7 +11,7 @@ pipeline {
             steps {
                 checkout scm
                 bat '''
-                    python -m venv jenkins_venv || true
+                    python -m venv jenkins_venv || echo "Virtualenv already exists"
                     call jenkins_venv\\Scripts\\activate
                     pip install -r requirements.txt
                 '''
@@ -23,11 +21,13 @@ pipeline {
         stage('Start Server') {
             steps {
                 script {
-                    // Start server and store PID
+                    // Start server in background
                     bat 'start /B python run.py > server.log 2>&1'
-                    // Verify server is up
-                    bat 'timeout /t 10 /nobreak'  // Windows wait
-                    bat 'type server.log'  // Debug logs
+                    // Wait for server to start (Windows alternative to sleep)
+                    bat 'ping 127.0.0.1 -n 10 > nul'  // 10 second delay
+                    // Verify server is running
+                    bat 'type server.log'
+                    bat 'tasklist | findstr python.exe || echo "Python process not found"'
                 }
             }
         }
@@ -44,8 +44,7 @@ pipeline {
         stage('Stop Server') {
             steps {
                 script {
-                    // Windows process termination
-                    bat 'taskkill /f /im python.exe /t || echo "No Python process found"'
+                    bat 'taskkill /f /im python.exe /t || echo "No Python process to kill"'
                 }
             }
         }
@@ -53,9 +52,9 @@ pipeline {
 
     post {
         always {
-            junit 'test-results.xml'  // Publish test results
+            junit 'test-results.xml'
             archiveArtifacts artifacts: 'server.log', allowEmptyArchive: true
-            cleanWs()  // Clean workspace
+            cleanWs()
         }
     }
 }
