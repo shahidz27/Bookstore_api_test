@@ -8,17 +8,18 @@ pipeline {
             }
         }
 
-        stage('Setup Environment') {
-            steps {
-                bat '''
-                    python -m venv jenkins_venv || echo "Virtualenv exists"
-                    call jenkins_venv\\Scripts\\activate
-                    python -m pip install --upgrade pip
-                    pip install -r requirements.txt --force-reinstall
-                    pip list  # Debug: Show installed packages
-                '''
-            }
+    stage('Setup Environment') {
+        steps {
+          bat '''
+            python -m venv jenkins_venv || echo "Virtualenv exists"
+            call jenkins_venv\\Scripts\\activate
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt --force-reinstall || exit 1
+            pip show flask || echo "Flask not installed"
+            pip list
+          '''
         }
+    }
 
         stage('Verify Installation') {
             steps {
