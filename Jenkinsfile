@@ -12,7 +12,7 @@ pipeline {
             steps {
                 bat '''
                     python -m venv jenkins_venv || echo "Virtualenv already exists"
-                    call jenkins_venv\\Scripts\\activate
+                    bat 'call jenkins_venv\\Scripts\\activate && python app.py'
                     python -m pip install --upgrade pip
                     pip install -r requirements.txt --force-reinstall || exit 1
                     pip show flask
