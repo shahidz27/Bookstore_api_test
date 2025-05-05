@@ -21,8 +21,10 @@ pipeline {
 
         stage('Test') {
             steps {
-                set PYTHONPATH=%CD%
-                bat 'jenkins_venv\\Scripts\\pytest --junitxml=test-results.xml ./test'
+                bat '''
+                  set PYTHONPATH=%CD%
+                  jenkins_venv\\Scripts\\pytest --junitxml=test-results.xml ./test
+                '''
             }
         }
     }
