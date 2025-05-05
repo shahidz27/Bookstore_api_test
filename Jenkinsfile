@@ -11,7 +11,7 @@ pipeline {
         stage('Setup') {
             steps {
                 bat '''
-                    python -m venv jenkins_venv || echo "Virtualenv already exists"
+                    python -m venv jenkins_venv || echo "Virtualenv exists"
                     call jenkins_venv\\Scripts\\activate
                     pip install -r requirements.txt
                 '''
@@ -21,12 +21,19 @@ pipeline {
         stage('Start Server') {
             steps {
                 script {
-                    // Start server in background and log output
-                    bat 'start /B python run.py > server.log 2>&1'
-                    // Wait 10 seconds for server to start (Windows)
-                    bat 'ping 127.0.0.1 -n 10 > nul'
-                    // Verify server is running
-                    bat 'tasklist | findstr python.exe || exit 1'
+                    // Kill any existing Python processes
+                    bat 'taskkill /f /im python.exe /t || echo "No processes to kill"'
+
+                    // Start server with explicit host and port
+                    bat '''
+                        start /B python run.py --host 0.0.0.0 --port 5000 > server.log 2>&1
+                        ping 127.0.0.1 -n 15 > nul
+                    '''
+
+                    // Debugging checks
+                    bat 'type server.log'
+                    bat 'netstat -ano | findstr 5000'
+                    bat 'tasklist /fi "IMAGENAME eq python.exe"'
                 }
             }
         }
@@ -42,10 +49,7 @@ pipeline {
 
         stage('Stop Server') {
             steps {
-                script {
-                    // Kill all Python processes
-                    bat 'taskkill /f /im python.exe /t || echo "No Python processes to kill"'
-                }
+                bat 'taskkill /f /im python.exe /t || echo "Cleanup complete"'
             }
         }
     }
