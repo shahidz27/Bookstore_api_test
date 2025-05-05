@@ -1,35 +1,61 @@
-
 pipeline {
     agent any
 
-    stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                url: 'https://github.com/shahidz27/Bookstore_api_test.git'
-            }
-        }
+    // Automatic triggers (choose one)
+    triggers {
+        githubPush()  // Requires GitHub webhook setup
+        // OR poll SCM periodically
+        // pollSCM('H/5 * * * *')  // Every 5 minutes
+    }
 
-        stage('Setup') {
+    stages {
+        stage('Checkout & Setup') {
             steps {
+                checkout scm
                 bat '''
-                    python -m venv jenkins_venv
-                    jenkins_venv\\Scripts\\pip install -r requirements.txt
+                    python -m venv jenkins_venv || true
+                    call jenkins_venv\\Scripts\\activate
+                    pip install -r requirements.txt
                 '''
             }
         }
 
-        stage('Test') {
+        stage('Start Server') {
             steps {
-                bat 'jenkins_venv\\Scripts\\pytest --junitxml=test-results.xml ./test'
+                script {
+                    // Start server and store PID
+                    bat 'start /B python run.py > server.log 2>&1'
+                    // Verify server is up
+                    bat 'timeout /t 10 /nobreak'  // Windows wait
+                    bat 'type server.log'  // Debug logs
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                bat '''
+                    call jenkins_venv\\Scripts\\activate
+                    pytest --junitxml=test-results.xml ./test
+                '''
+            }
+        }
+
+        stage('Stop Server') {
+            steps {
+                script {
+                    // Windows process termination
+                    bat 'taskkill /f /im python.exe /t || echo "No Python process found"'
+                }
             }
         }
     }
 
     post {
         always {
-            junit 'test-results.xml'
-            cleanWs()
+            junit 'test-results.xml'  // Publish test results
+            archiveArtifacts artifacts: 'server.log', allowEmptyArchive: true
+            cleanWs()  // Clean workspace
         }
     }
 }
