@@ -2,7 +2,7 @@
 
 🔧 Tools & Technologies:
 
-Flask: Used for developing the Bookstore API, implementing key endpoints (GET, POST, RESET) for managing books
+Flask: Used for developing the Bookstore API, implementing key endpoints (GET, POST, RESET) for managing books.
 Pytest – Used for writing and executing test cases for the Bookstore API.
 Fixtures – Set up reusable test components (e.g., Flask test client, sample book data).
 Parameterization – Run tests with multiple input datasets to ensure API reliability.
